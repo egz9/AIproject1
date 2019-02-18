@@ -21,6 +21,12 @@ public class Grid {
 		for (int i = 0; i < grid.length; i++){
 			for (int j = 0; j < grid[i].length; j++){
 				if ( !grid[i][j].isBlocked ){
+					//*************************************
+					//if (grid[i][j].f == -1){
+						//System.out.print("O ");
+						//continue;
+					//}
+					//**************************************
 					System.out.print("_ ");
 				} 
 				else {
@@ -99,66 +105,75 @@ public class Grid {
 			}
 				
 			visited[current.x][current.y] = true;
+			//current.f = -1;//*****************************************
 			if (!cellHasUnvisitedNeighbors(current, visited)){
 				continue;
 			}
 			
 			//check right
 			
-			//choose random neighbor. 0=up, 1=right, 2=down, 3=left
-			int n = rand.nextInt(4);
 			
 			
-			
-			//cell above
-			if (n == 0 && current.y + 1 < grid[0].length && !visited[current.x][current.y+1]){
-				//mark cell as blocked with 30% probability
-				if (rand.nextInt(10) + 1 <= 5){
-					grid[current.x][current.y+1].isBlocked = true;
-					visited[current.x][current.y+1] = true;
+			int iterations = 0;
+			while (iterations < 4) {
+				//choose random neighbor. 0=up, 1=right, 2=down, 3=left
+				int n = rand.nextInt(4);
+				//cell above
+				if (n == 0 && current.y + 1 < grid[0].length && !visited[current.x][current.y+1]){
+					//mark cell as blocked with some probability
+					if (rand.nextInt(10) + 1 <= 3){
+						grid   [current.x][current.y+1].isBlocked = true;
+						visited[current.x][current.y+1] = true;
+					}
+					else {
+						stack.push(grid[current.x][current.y+1]);
+						break;
+					}
 				}
-				else {
-					stack.push(grid[current.x][current.y+1]);
+				
+				//cell to the right
+				if (n == 1 && current.x + 1 < grid.length && !visited[current.x+1][current.y]){
+					if (rand.nextInt(10) + 1 <= 3){
+						grid   [current.x+1][current.y].isBlocked = true;
+						visited[current.x+1][current.y] = true;
+					}
+					else {
+						stack.push(grid[current.x+1][current.y]);
+						break;
+					}
 				}
+				
+				//cell underneath
+				if (n == 2 && current.y - 1 >= 0 && !visited[current.x][current.y-1]){
+					if (rand.nextInt(10) + 1 <= 3){
+						grid   [current.x][current.y-1].isBlocked = true;
+						visited[current.x][current.y-1] = true;
+					}
+					else {
+						stack.push(grid[current.x][current.y-1]);
+						break;
+					}
+				}
+				
+				//cell left
+				if (n == 3 && current.x - 1 >= 0 && !visited[current.x-1][current.y]){
+					if (rand.nextInt(10) + 1 <= 3){
+						grid   [current.x-1][current.y].isBlocked = true;
+						visited[current.x-1][current.y] = true;
+					}
+					else {
+						stack.push(grid[current.x-1][current.y]);
+						break;
+					}
+				}
+				iterations++;
 			}
-			
-			//cell to the right
-			if (n == 1 && current.x + 1 < grid.length && !visited[current.x+1][current.y]){
-				if (rand.nextInt(10) + 1 <= 5){
-					grid   [current.x+1][current.y].isBlocked = true;
-					visited[current.x+1][current.y] = true;
-				}
-				else {
-					stack.push(grid[current.x+1][current.y]);
-				}
-			}
-			
-			//cell underneath
-			if (n == 2 && current.y - 1 >= 0 && !visited[current.x][current.y-1]){
-				if (rand.nextInt(10) + 1 <= 5){
-					grid   [current.x][current.y-1].isBlocked = true;
-					visited[current.x][current.y-1] = true;
-				}
-				else {
-					stack.push(grid[current.x][current.y-1]);
-				}
-			}
-			
-			//cell left
-			if (n == 3 && current.x - 1 >= 0 && !visited[current.x-1][current.y]){
-				if (rand.nextInt(10) + 1 <= 5){
-					grid   [current.x-1][current.y].isBlocked = true;
-					visited[current.x-1][current.y] = true;
-				}
-				else {
-					stack.push(grid[current.x-1][current.y]);
-				}
-			}
+			printGrid();
 		}
 	}
 	
 	public static void main(String[] args){
-		Grid myGrid = new Grid(101, 101);
+		Grid myGrid = new Grid(20, 20);
 		//myGrid.printGrid();
 		myGrid.generateMaze();
 		myGrid.printGrid();
