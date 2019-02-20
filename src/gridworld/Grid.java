@@ -1,9 +1,17 @@
 package gridworld;
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.ObjectInputStream;
+import java.io.ObjectOutputStream;
+import java.io.Serializable;
 import java.util.Random;
 import java.util.Stack;
 
 
-public class Grid {
+public class Grid implements Serializable {
 	Cell[][] grid;
 	
 	public Grid(int rows, int columns){
@@ -13,6 +21,25 @@ public class Grid {
 				grid[i][j] = new Cell(i,j,-1);//h = -1 temporarily
 			}
 		}
+	}
+	
+	//serialize Grid to file specified with filename
+	public void writeToFile(String filename) throws IOException{
+		FileOutputStream file = new FileOutputStream(filename);
+		ObjectOutputStream out = new ObjectOutputStream(file);
+		out.writeObject(this);
+		out.close();
+		file.close();
+	}
+	
+	//returns serialized grid from file specified by filename
+	public static Grid loadFromFile(String filename) throws IOException, ClassNotFoundException{
+		FileInputStream file = new FileInputStream(filename); 
+        ObjectInputStream in = new ObjectInputStream(file);
+        Grid g = (Grid)in.readObject();
+        in.close();
+        file.close();
+        return g;
 	}
 	
 	public void printGrid(){
@@ -168,14 +195,29 @@ public class Grid {
 				}
 				iterations++;
 			}
-			printGrid();
+			//printGrid();
 		}
 	}
 	
 	public static void main(String[] args){
 		Grid myGrid = new Grid(20, 20);
 		//myGrid.printGrid();
-		myGrid.generateMaze();
-		myGrid.printGrid();
+		//myGrid.generateMaze();
+		//myGrid.printGrid();
+		for (int i = 0; i < 5; i++){
+			try {
+				myGrid = new Grid(20, 20);
+				myGrid.generateMaze();
+				myGrid.printGrid();
+				myGrid.writeToFile("grids" + File.separator + "test" + (i+1));
+				//myGrid = loadFromFile("grids" + File.separator + "grid1");
+				//myGrid.printGrid();
+			} catch (Exception e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
+		}
+		
+		
 	}
 }

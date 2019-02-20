@@ -1,6 +1,8 @@
 package gridworld;
 
-public class Cell {
+import java.io.Serializable;
+
+public class Cell implements Serializable{
 	
 	//x coordinate in grid
 	int x;
