@@ -7,6 +7,8 @@ import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.io.Serializable;
+import java.util.ArrayList;
+import java.util.PriorityQueue;
 import java.util.Random;
 import java.util.Stack;
 
@@ -56,17 +58,19 @@ public class Grid implements Serializable {
 		for (int j = 0; j < grid[0].length; j++){
 			for (int i = 0; i < grid.length; i++){
 				if (grid[i][j] == agent){
-					System.out.print("A ");
+					System.out.print("A");
 				}
 				else if (grid[i][j] == target){
-					System.out.print("T ");
+					System.out.print("T");
 				}
 				else if ( !grid[i][j].isBlocked ){
-					System.out.print("_ ");
+					System.out.print("_");
+					//System.out.print(grid[i][j].h);
 				} 
 				else {
-					System.out.print("X ");
+					System.out.print("X");
 				}
+				System.out.print(" ");
 			}
 			System.out.println();
 		}
@@ -213,9 +217,94 @@ public class Grid implements Serializable {
 		}
 	}
 	
+	private int calcManhattanDist(Cell c1, Cell c2){
+		if (c1 == null || c2 == null){
+			return -1;
+		}
+		return Math.abs(c1.x - c2.x) + Math.abs(c1.y - c2.y);
+	}
+	
+	public void setHValues(){
+		if (target == null)
+			return;
+		for (int j = 0; j < grid[0].length; j++){
+			for (int i = 0; i < grid.length; i++){
+				grid[i][j].h = calcManhattanDist(grid[i][j], target);
+			}
+		}
+	}
+	
+	public void setGValues(){
+		for (int j = 0; j < grid[0].length; j++){
+			for (int i = 0; i < grid.length; i++){
+				grid[i][j].g = -1;
+			}
+		}
+	}
+	
+	private ArrayList<Cell> getNeighbors(Cell c){
+		ArrayList<Cell> neighbors = new ArrayList<Cell>();
+		try {
+			neighbors.add(grid[c.x+1][c.y]);
+		} 
+		catch (IndexOutOfBoundsException e){}
+		try {
+			neighbors.add(grid[c.x][c.y+1]);
+		} 
+		catch (IndexOutOfBoundsException e){}
+		try {
+			neighbors.add(grid[c.x-1][c.y]);
+		} 
+		catch (IndexOutOfBoundsException e){}
+		try {
+			neighbors.add(grid[c.x][c.y-1]);
+		} 
+		catch (IndexOutOfBoundsException e){}
+		return neighbors;
+	}
+	
+	public void computePath(Grid agentGrid, PriorityQueue<Cell> pq, TreeNode head){
+		while (pq.peek() != null && (pq.peek().g < target.g || target.g < 0) ){
+			Cell current = pq.poll();
+			ArrayList<Cell> neighbors = agentGrid.getNeighbors(current);
+			for (Cell n: neighbors){
+				//if we haven't encountered this neighbor yet or the g value of 
+				//the neighbor is higher than it needs to be then we update the 
+				//g value and f value and insert it into the queue
+				if (n.g < 0 || n.g > current.g + 1){
+					n.g = current.g + 1;
+					head.addToTree(current, n);
+					if (pq.contains(n))
+						pq.remove(n);
+					n.f = n.g + n.h;
+					pq.add(n);
+				}
+			}
+		}
+	}
+	
+	public static void repeatedFowardAStar(Grid myGrid){
+		myGrid.setHValues();
+		Grid agentGrid = new Grid(myGrid.grid.length, myGrid.grid[0].length);
+		agentGrid.agent = agentGrid.grid[myGrid.agent.x][myGrid.agent.y];
+		agentGrid.target = agentGrid.grid[myGrid.target.x][myGrid.target.y];
+		while (!myGrid.agent.equals(myGrid.target)){
+			myGrid.agent.g = 0;
+			myGrid.setGValues(); //all -1
+			PriorityQueue<Cell> pq = new PriorityQueue<Cell>();
+			myGrid.agent.f = myGrid.agent.g + myGrid.agent.h;
+			pq.add(myGrid.agent);
+			
+		}
+	}
+	
+	
 	public static void main(String[] args){
 		
 		
+		
+		
+		///*
 		Grid myGrid;
 		myGrid = new Grid(3, 5);
 		myGrid.printGrid();
@@ -230,9 +319,24 @@ public class Grid implements Serializable {
 		myGrid.agent = myGrid.grid[0][3];
 		myGrid.target = myGrid.grid[19][18];
 		myGrid.printGrid();
+		myGrid.setHValues();
+		myGrid.printGrid();
 		
 		
 		
+		TreeNode head = new TreeNode(myGrid.agent);
+		head.addToTree(myGrid.grid[0][3], myGrid.grid[1][3]);
+		head.addToTree(myGrid.grid[0][3], myGrid.grid[0][2]);
+		System.out.println("found with dfs: " + head.findWithDfs(myGrid.grid[0][2]));
+		head.addToTree(myGrid.grid[0][2], myGrid.grid[1][2]);
+		System.out.println(head.data);
+		System.out.println(head.child1.data);
+		System.out.println(head.child2.data);
+		System.out.println(head.child2.child1.data);
+		System.out.println();
+		
+		
+		//*/
 		
 		/********************************************************************
 		//write mazes to auto-generated files
