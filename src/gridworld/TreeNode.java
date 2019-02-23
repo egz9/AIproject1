@@ -15,24 +15,44 @@ public class TreeNode {
 		this.data = c;
 	}
 	
+	public String toString(){
+		String s = data.toString();
+		if (child1 != null){
+			s = s + "\nc1:" + child1.data.x + " " + child1.data.y;
+		}
+		if (child2 != null){
+			s = s + "\nc2:" + child2.data.x + " " + child2.data.y;
+		}
+		if (child3 != null){
+			s = s + "\nc3:" + child3.data.x + " " + child3.data.y;
+		}
+		if (child4 != null){
+			s = s + "\nc4:" + child4.data.x + " " + child4.data.y;
+		}
+		if (parent != null){
+			s = s + "\np:" + parent.data.x + " " + parent.data.y;
+		}
+		return s;
+	}
+	
 	//add child of this node with childData 
 	private boolean addChild(Cell childData){
 		TreeNode child = new TreeNode(childData);
-		if (this.child1 == null){
+		if (this.child1 == null || this.child1.data.equals(childData)){
 			this.child1 = child;
-			child.parent = this.child1;
+			child.parent = this;
 		}
-		else if (this.child2 == null){
+		else if (this.child2 == null || this.child2.data.equals(childData)){
 			this.child2 = child;
-			child.parent = this.child2;
+			child.parent = this;
 		}
-		else if (this.child3 == null){
+		else if (this.child3 == null || this.child3.data.equals(childData)){
 			this.child3 = child;
-			child.parent = this.child3;
+			child.parent = this;
 		}
-		else if (this.child4 == null){
+		else if (this.child4 == null || this.child4.data.equals(childData)){
 			this.child4 = child;
-			child.parent = this.child4;
+			child.parent = this;
 		}
 		else 
 			return false;
@@ -97,10 +117,24 @@ public class TreeNode {
 			return false;
 		}
 		if (parent.addChild(childData) == false){
+			
 			System.out.println("Couldnt add child");
 			return false;
 		}
 		return true;
+	}
+	
+	public Stack<Cell> getPath(Cell start, Cell end){
+		TreeNode target = findWithDfs(end);
+		if (target == null)
+			return null;
+		Stack<Cell> pathStack = new Stack<Cell>();
+		
+		while (target != null && !target.data.equals(start)){
+			pathStack.push(target.data);
+			target = target.parent;
+		}
+		return pathStack;
 	}
 	
 	

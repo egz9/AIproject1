@@ -19,6 +19,7 @@ public class Grid implements Serializable {
 	Cell agent;
 	Cell target;
 	
+	//constructor requires grid dimensions but agent and target not set initially
 	public Grid(int rows, int columns){
 		agent = target = null;
 		grid = new Cell[rows][columns];
@@ -217,6 +218,7 @@ public class Grid implements Serializable {
 		}
 	}
 	
+	//returns the manhattan distance between Cell c1 and c2
 	private int calcManhattanDist(Cell c1, Cell c2){
 		if (c1 == null || c2 == null){
 			return -1;
@@ -224,6 +226,7 @@ public class Grid implements Serializable {
 		return Math.abs(c1.x - c2.x) + Math.abs(c1.y - c2.y);
 	}
 	
+	//sets the h value for each cell using calcManhattanDist(...) method
 	public void setHValues(){
 		if (target == null)
 			return;
@@ -234,6 +237,7 @@ public class Grid implements Serializable {
 		}
 	}
 	
+	//sets each g value to -1 to represent infinity
 	public void setGValues(){
 		for (int j = 0; j < grid[0].length; j++){
 			for (int i = 0; i < grid.length; i++){
@@ -242,6 +246,8 @@ public class Grid implements Serializable {
 		}
 	}
 	
+	//gets all neighboring cells of Cell c. It will return a list of neighbors
+	//including blocked ones. Max of 4 neigbors returned (up, down, left, right)
 	private ArrayList<Cell> getNeighbors(Cell c){
 		ArrayList<Cell> neighbors = new ArrayList<Cell>();
 		try {
@@ -263,37 +269,86 @@ public class Grid implements Serializable {
 		return neighbors;
 	}
 	
-	public void computePath(Grid agentGrid, PriorityQueue<Cell> pq, TreeNode head){
+	public void agentChecksNeigbors(Boolean[][] knownCells){
+		try {
+			knownCells[agent.x+1][agent.y] = true;
+		} 
+		catch (IndexOutOfBoundsException e){}
+		try {
+			knownCells[agent.x][agent.y+1] = true;
+		} 
+		catch (IndexOutOfBoundsException e){}
+		try {
+			knownCells[agent.x-1][agent.y] = true;
+		} 
+		catch (IndexOutOfBoundsException e){}
+		try {
+			knownCells[agent.x][agent.y-1] = true;
+		} 
+		catch (IndexOutOfBoundsException e){}
+	}
+	
+	//uses a* algorithm to determine path to target given agentGrid. The agentGrid 
+	//includes the agent's knowledge of the grid meaning it only knows a cell is blocked
+	//if it has visited a neigbor to that blocked cell.
+	public void computePath(Boolean[][] knownCells, PriorityQueue<Cell> pq, TreeNode head){
 		while (pq.peek() != null && (pq.peek().g < target.g || target.g < 0) ){
 			Cell current = pq.poll();
-			ArrayList<Cell> neighbors = agentGrid.getNeighbors(current);
+			ArrayList<Cell> neighbors = getNeighbors(current);
 			for (Cell n: neighbors){
 				//if we haven't encountered this neighbor yet or the g value of 
 				//the neighbor is higher than it needs to be then we update the 
 				//g value and f value and insert it into the queue
-				if (n.g < 0 || n.g > current.g + 1){
+				//if (neighbor is (known and unblocked) or unknown) AND (n.g value could be improved)
+				//System.out.println(n.x + " " + n.y + " " + knownCells[n.x][n.y]);
+				if ( ((knownCells[n.x][n.y] && !n.isBlocked) || !knownCells[n.x][n.y])
+						&& (n.g < 0 || n.g > current.g + 1) ){
 					n.g = current.g + 1;
 					head.addToTree(current, n);
 					if (pq.contains(n))
 						pq.remove(n);
 					n.f = n.g + n.h;
 					pq.add(n);
+					//System.out.println("added [" + n + "] to pq");
 				}
 			}
 		}
 	}
 	
+	//assumes agent and target are already set.
 	public static void repeatedFowardAStar(Grid myGrid){
+		
 		myGrid.setHValues();
-		Grid agentGrid = new Grid(myGrid.grid.length, myGrid.grid[0].length);
-		agentGrid.agent = agentGrid.grid[myGrid.agent.x][myGrid.agent.y];
-		agentGrid.target = agentGrid.grid[myGrid.target.x][myGrid.target.y];
+		Boolean[][] knownCells = new Boolean[myGrid.grid.length][myGrid.grid[0].length]; 
+		for (int i = 0; i < knownCells.length; i++){
+			for (int j = 0; j < knownCells[i].length; j++){
+				knownCells[i][j] = false;
+			}
+		}
+		TreeNode head = new TreeNode(myGrid.agent);
+		
 		while (!myGrid.agent.equals(myGrid.target)){
-			myGrid.agent.g = 0;
+			myGrid.agentChecksNeigbors(knownCells);
 			myGrid.setGValues(); //all -1
+			myGrid.agent.g = 0;
+			head = new TreeNode(myGrid.agent);
 			PriorityQueue<Cell> pq = new PriorityQueue<Cell>();
 			myGrid.agent.f = myGrid.agent.g + myGrid.agent.h;
 			pq.add(myGrid.agent);
+			myGrid.computePath(knownCells, pq, head);
+			Stack<Cell> pathStack = head.getPath(myGrid.agent, myGrid.target);
+			if (pq.isEmpty() || pathStack.isEmpty()){
+				System.out.println("NO PATH TO TARGET.");
+				return;
+			}
+			while ( !pathStack.isEmpty() ){
+				Cell c = pathStack.pop();
+				if (c.isBlocked)
+					break;
+				myGrid.agent = c;
+				System.out.println("\nAgent Moves\n");
+				myGrid.printGrid();
+			}
 			
 		}
 	}
@@ -306,8 +361,9 @@ public class Grid implements Serializable {
 		
 		///*
 		Grid myGrid;
-		myGrid = new Grid(3, 5);
+		myGrid = new Grid(20,20);
 		myGrid.printGrid();
+		
 		try {
 			myGrid = loadFromFile("grids" + File.separator + "test1");
 		} catch (ClassNotFoundException | IOException e) {
@@ -315,15 +371,16 @@ public class Grid implements Serializable {
 			e.printStackTrace();
 			return;
 		}
+		
 		myGrid.printGrid();
 		myGrid.agent = myGrid.grid[0][3];
 		myGrid.target = myGrid.grid[19][18];
 		myGrid.printGrid();
 		myGrid.setHValues();
 		myGrid.printGrid();
+		repeatedFowardAStar(myGrid);
 		
-		
-		
+		/*
 		TreeNode head = new TreeNode(myGrid.agent);
 		head.addToTree(myGrid.grid[0][3], myGrid.grid[1][3]);
 		head.addToTree(myGrid.grid[0][3], myGrid.grid[0][2]);
@@ -334,7 +391,7 @@ public class Grid implements Serializable {
 		System.out.println(head.child2.data);
 		System.out.println(head.child2.child1.data);
 		System.out.println();
-		
+		*/
 		
 		//*/
 		
