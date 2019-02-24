@@ -246,6 +246,14 @@ public class Grid implements Serializable {
 		}
 	}
 	
+	private void setFValues(){
+		for (int j = 0; j < grid[0].length; j++){
+			for (int i = 0; i < grid.length; i++){
+				grid[i][j].f = -1;
+			}
+		}
+	}
+	
 	//gets all neighboring cells of Cell c. It will return a list of neighbors
 	//including blocked ones. Max of 4 neigbors returned (up, down, left, right)
 	private ArrayList<Cell> getNeighbors(Cell c){
@@ -291,9 +299,34 @@ public class Grid implements Serializable {
 	//uses a* algorithm to determine path to target given agentGrid. The agentGrid 
 	//includes the agent's knowledge of the grid meaning it only knows a cell is blocked
 	//if it has visited a neigbor to that blocked cell.
-	public void computePath(Boolean[][] knownCells, PriorityQueue<Cell> pq, TreeNode head){
+	public void computePath(Boolean[][] knownCells, PriorityQueue<Cell> pq, 
+			TreeNode head, Boolean smallGTieBreaker){
+		
 		while (pq.peek() != null && (pq.peek().g < target.g || target.g < 0) ){
 			Cell current = pq.poll();
+			ArrayList<Cell> cellsWithSameF = new ArrayList<Cell>();
+			cellsWithSameF.add(current);
+			
+			//break ties with greater g value-----------------------
+			while (pq.peek() != null && pq.peek().f == current.f){
+				cellsWithSameF.add(pq.poll());
+			}
+			
+			if (smallGTieBreaker)
+				cellsWithSameF.sort( (Cell c1, Cell c2) -> c1.g - c2.g);
+			else 
+				cellsWithSameF.sort( (Cell c1, Cell c2) -> c2.g - c1.g);
+			current = cellsWithSameF.remove(0);
+			//add any cells left back to the queue
+			if (cellsWithSameF.size() >= 1){
+				for (Cell c: cellsWithSameF){
+					//System.out.println("cellsWithSameF : " + c);
+					pq.add(c);
+				}
+				System.out.println();
+			}
+			//------------------------------------------------------
+			
 			ArrayList<Cell> neighbors = getNeighbors(current);
 			for (Cell n: neighbors){
 				//if we haven't encountered this neighbor yet or the g value of 
@@ -317,7 +350,7 @@ public class Grid implements Serializable {
 	
 	//assumes agent and target are already set.
 	public static void repeatedFowardAStar(Grid myGrid){
-		
+		int moveCounter = 1;
 		myGrid.setHValues();
 		Boolean[][] knownCells = new Boolean[myGrid.grid.length][myGrid.grid[0].length]; 
 		for (int i = 0; i < knownCells.length; i++){
@@ -330,15 +363,17 @@ public class Grid implements Serializable {
 		while (!myGrid.agent.equals(myGrid.target)){
 			myGrid.agentChecksNeigbors(knownCells);
 			myGrid.setGValues(); //all -1
+			myGrid.setFValues();
 			myGrid.agent.g = 0;
 			head = new TreeNode(myGrid.agent);
 			PriorityQueue<Cell> pq = new PriorityQueue<Cell>();
 			myGrid.agent.f = myGrid.agent.g + myGrid.agent.h;
 			pq.add(myGrid.agent);
-			myGrid.computePath(knownCells, pq, head);
+			myGrid.computePath(knownCells, pq, head, false);
 			Stack<Cell> pathStack = head.getPath(myGrid.agent, myGrid.target);
 			if (pq.isEmpty() || pathStack.isEmpty()){
 				System.out.println("NO PATH TO TARGET.");
+				myGrid.printGrid();
 				return;
 			}
 			while ( !pathStack.isEmpty() ){
@@ -346,7 +381,7 @@ public class Grid implements Serializable {
 				if (c.isBlocked)
 					break;
 				myGrid.agent = c;
-				System.out.println("\nAgent Moves\n");
+				//System.out.println("\nMove " + moveCounter++ + "\n");
 				myGrid.printGrid();
 			}
 			
@@ -361,25 +396,29 @@ public class Grid implements Serializable {
 		
 		///*
 		Grid myGrid;
-		myGrid = new Grid(20,20);
+		myGrid = new Grid(50, 50);
 		myGrid.printGrid();
+		//myGrid.generateMaze();
 		
 		try {
-			myGrid = loadFromFile("grids" + File.separator + "test1");
+			myGrid = loadFromFile("grids" + File.separator + "test7");
 		} catch (ClassNotFoundException | IOException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
 			return;
 		}
-		
 		myGrid.printGrid();
 		myGrid.agent = myGrid.grid[0][3];
-		myGrid.target = myGrid.grid[19][18];
+		myGrid.target = myGrid.grid[49][45];
+		myGrid.agent.isBlocked = false;
+		myGrid.target.isBlocked = false;
+		
+		
 		myGrid.printGrid();
 		myGrid.setHValues();
 		myGrid.printGrid();
 		repeatedFowardAStar(myGrid);
-		
+		myGrid.printGrid();
 		/*
 		TreeNode head = new TreeNode(myGrid.agent);
 		head.addToTree(myGrid.grid[0][3], myGrid.grid[1][3]);

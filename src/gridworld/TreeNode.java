@@ -15,6 +15,7 @@ public class TreeNode {
 		this.data = c;
 	}
 	
+	//prints out cell data and (x, y) pairs of children and parents
 	public String toString(){
 		String s = data.toString();
 		if (child1 != null){
@@ -59,6 +60,8 @@ public class TreeNode {
 		return true;
 	}
 	
+	//returns one of the children of current if they are not within the visited list.
+	//used when doing dfs on the tree to find a particular TreeNode
 	private TreeNode getUnvisitedTreeNode(TreeNode current, ArrayList<TreeNode> visited){
 		if (current.child1 != null && !visited.contains(current.child1) ){
 			return current.child1;
@@ -75,6 +78,7 @@ public class TreeNode {
 		return null;
 	}
 	
+	//returns the TreeNode containing Cell c's data using dfs
 	public TreeNode findWithDfs(Cell c){
 		ArrayList<TreeNode> visited = new ArrayList<TreeNode>();
 		Stack<TreeNode> stack = new Stack<TreeNode>();
@@ -110,6 +114,8 @@ public class TreeNode {
 		return null;
 	}
 	
+	//finds cell containing parentData using dfs method, then adds
+	//a new treeNode containing the childData
 	public boolean addToTree(Cell parentData, Cell childData){
 		TreeNode parent = findWithDfs(parentData);
 		if (parent == null){
@@ -124,6 +130,9 @@ public class TreeNode {
 		return true;
 	}
 	
+	//finds TreeNode containing the end Cell and follows parent pointers up to 
+	//the start cell. Pushes each cell into a stack so that it is ordered perfectly
+	//and returns the stack.
 	public Stack<Cell> getPath(Cell start, Cell end){
 		TreeNode target = findWithDfs(end);
 		if (target == null)
