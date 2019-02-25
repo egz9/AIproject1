@@ -233,6 +233,8 @@ public class Grid implements Serializable {
 		for (int j = 0; j < grid[0].length; j++){
 			for (int i = 0; i < grid.length; i++){
 				grid[i][j].h = calcManhattanDist(grid[i][j], target);
+				grid[i][j].g = -1;
+				grid[i][j].f = -1;
 			}
 		}
 	}
@@ -300,10 +302,11 @@ public class Grid implements Serializable {
 	//includes the agent's knowledge of the grid meaning it only knows a cell is blocked
 	//if it has visited a neigbor to that blocked cell.
 	public void computePath(Boolean[][] knownCells, PriorityQueue<Cell> pq, 
-			Tree tree, Boolean smallGTieBreaker){
-		
+			Tree tree, Boolean smallGTieBreaker, ArrayList<Cell> visited){
+		visited.add(pq.peek());
 		while (pq.peek() != null && (pq.peek().g < target.g || target.g < 0) ){
 			Cell current = pq.poll();
+			//visited.add(current);
 			ArrayList<Cell> cellsWithSameF = new ArrayList<Cell>();
 			cellsWithSameF.add(current);
 			
@@ -342,6 +345,7 @@ public class Grid implements Serializable {
 						pq.remove(n);
 					n.f = n.g + n.h;
 					pq.add(n);
+					visited.add(n);
 					//System.out.println("added [" + n + "] to pq");
 				}
 			}
@@ -367,17 +371,30 @@ public class Grid implements Serializable {
 		}
 		TreeNode head = new TreeNode(myGrid.agent);
 		Tree tree = new Tree(head);
+		ArrayList<Cell> visited = null;
 		while (!myGrid.agent.equals(myGrid.target)){
 			myGrid.agentChecksNeigbors(knownCells);
-			myGrid.setGValues(); //all -1
-			myGrid.setFValues(); //all -1
+			
+			if (visited != null){
+				for (Cell c: visited){
+					c.g = -1;
+					c.f = -1;
+				}
+			}
+			
+			//myGrid.setGValues(); //all -1
+			//myGrid.setFValues(); //all -1
+			
+			visited = new ArrayList<Cell>();
+			
+			
 			myGrid.agent.g = 0;
 			head = new TreeNode(myGrid.agent);
 			tree = new Tree(head);
 			PriorityQueue<Cell> pq = new PriorityQueue<Cell>();
 			myGrid.agent.f = myGrid.agent.g + myGrid.agent.h;
 			pq.add(myGrid.agent);
-			myGrid.computePath(knownCells, pq, tree, smallGTieBreaker);
+			myGrid.computePath(knownCells, pq, tree, smallGTieBreaker, visited);
 			Stack<Cell> pathStack = tree.getPath(myGrid.agent, myGrid.target);
 			if (pq.isEmpty() || pathStack.isEmpty()){
 				System.out.println("NO PATH TO TARGET.");
