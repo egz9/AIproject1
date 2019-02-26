@@ -52,5 +52,14 @@ public class Tree {
 		}
 		return pathStack;
 	}
+	
+	public TreeNode getNode(Cell data){
+		for (TreeNode node: flatList){
+			if (node.data.equals(data)){
+				return node;
+			}
+		}
+		return null;
+	}
 
 }
