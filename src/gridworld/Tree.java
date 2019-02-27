@@ -53,6 +53,8 @@ public class Tree {
 		return pathStack;
 	}
 	
+	//returns a TreeNode whose data field references the same data field in the parameter
+	//of this function
 	public TreeNode getNode(Cell data){
 		for (TreeNode node: flatList){
 			if (node.data.equals(data)){

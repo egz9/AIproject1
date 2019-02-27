@@ -79,6 +79,9 @@ public class Grid implements Serializable {
 		System.out.println();
 	}
 	
+	//prints board in same way as no parameter version except it prints
+	//out an 'O' for cells that the agent has moved to using the moveHistory
+	//2d array
 	public void printGrid(boolean[][] moveHistory){
 		if (grid == null)
 			return;
@@ -108,6 +111,7 @@ public class Grid implements Serializable {
 		System.out.println();
 	}
 	
+	//GRID CONSTRUCTION-------------------------------------------------------------------------
 	//generate's maze using a dfs approach
 	public void generateMaze(){
 		boolean[][] visited = new boolean[grid.length][grid[0].length];
@@ -247,6 +251,7 @@ public class Grid implements Serializable {
 			//printGrid();
 		}
 	}
+	//END OF GRID CONSTRUCTION-------------------------------------------------------------------
 	
 	//returns the manhattan distance between Cell c1 and c2
 	private int calcManhattanDist(Cell c1, Cell c2){
@@ -257,30 +262,13 @@ public class Grid implements Serializable {
 	}
 	
 	//sets the h value for each cell using calcManhattanDist(...) method
-	public void setHValues(){
+	public void initialize_h_g_f_values(){
 		if (target == null)
 			return;
 		for (int j = 0; j < grid[0].length; j++){
 			for (int i = 0; i < grid.length; i++){
 				grid[i][j].h = calcManhattanDist(grid[i][j], target);
 				grid[i][j].g = -1;
-				grid[i][j].f = -1;
-			}
-		}
-	}
-	
-	//sets each g value to -1 to represent infinity
-	public void setGValues(){
-		for (int j = 0; j < grid[0].length; j++){
-			for (int i = 0; i < grid.length; i++){
-				grid[i][j].g = -1;
-			}
-		}
-	}
-	
-	private void setFValues(){
-		for (int j = 0; j < grid[0].length; j++){
-			for (int i = 0; i < grid.length; i++){
 				grid[i][j].f = -1;
 			}
 		}
@@ -309,6 +297,9 @@ public class Grid implements Serializable {
 		return neighbors;
 	}
 	
+	//this is how agent updates his knowledge of cells around him.
+	//Checks all 4 neighbors of agent and sets those cells to true
+	//in the knownCells 2D array
 	public void agentChecksNeigbors(Boolean[][] knownCells){
 		try {
 			knownCells[agent.x+1][agent.y] = true;
@@ -340,9 +331,11 @@ public class Grid implements Serializable {
 	//an array of all the cells whose g and f values have changed 
 	public void computePath(Boolean[][] knownCells, PriorityQueue<Cell> pq, 
 			Tree tree, Boolean smallGTieBreaker, ArrayList<Cell> visited, boolean isFoward){
+		
+		
 		visited.add(pq.peek());
 		
-		//goal could be target or agent if we do foward or backward
+		//goal could be target or agent depending on if we do foward or backward version
 		Cell goal;
 		if (isFoward){
 			goal = target;
@@ -409,7 +402,7 @@ public class Grid implements Serializable {
 	//way. 
 	public static void repeatedFowardAStar(Grid myGrid, Boolean smallGTieBreaker){
 		int moveCounter = 1;
-		myGrid.setHValues();
+		myGrid.initialize_h_g_f_values();
 		Boolean[][] knownCells = new Boolean[myGrid.grid.length][myGrid.grid[0].length]; 
 		boolean[][] moveHistory = new boolean[myGrid.grid.length][myGrid.grid.length];
 		for (int i = 0; i < knownCells.length; i++){
@@ -462,19 +455,21 @@ public class Grid implements Serializable {
 					break;
 				myGrid.agent = c;
 				moveCounter++;
-				//System.out.println("\nMove " + moveCounter++);
+				System.out.println("\nMove " + moveCounter++);
 				moveHistory[c.x][c.y] = true;
-				myGrid.printGrid();
+				//myGrid.printGrid();
 			}
 			
 		}
 		System.out.println(moveCounter);
 		myGrid.printGrid(moveHistory);
 	}
-
+	
+	//goal state is agent instead of target. There have been some adjustments but this is 
+	//very similar to foward version
 	public static void repeatedBackwardAStar(Grid myGrid, Boolean smallGTieBreaker){
 		int moveCounter = 1;
-		myGrid.setHValues();
+		myGrid.initialize_h_g_f_values();
 		Boolean[][] knownCells = new Boolean[myGrid.grid.length][myGrid.grid[0].length]; 
 		boolean[][] moveHistory = new boolean[myGrid.grid.length][myGrid.grid.length];
 		for (int i = 0; i < knownCells.length; i++){
@@ -515,8 +510,8 @@ public class Grid implements Serializable {
 			
 			//Stack<Cell> pathStack = tree.getPath(myGrid.target, myGrid.agent);
 			if (pq.isEmpty() && agentNode == null){
-				System.out.println("NO PATH TO TARGET.");
-				//System.out.println("-1");
+				//System.out.println("NO PATH TO TARGET.");
+				System.out.println("-1");
 				//myGrid.printGrid();
 				return;
 			}
@@ -531,7 +526,7 @@ public class Grid implements Serializable {
 				moveCounter++;
 				//System.out.println("\nMove " + moveCounter++);
 				moveHistory[c.x][c.y] = true;
-				myGrid.printGrid();
+				//myGrid.printGrid();
 				agentNode = agentNode.parent;
 			}
 			
@@ -540,26 +535,35 @@ public class Grid implements Serializable {
 		myGrid.printGrid(moveHistory);
 	}
 	
+	//all in one method to move agent to target using either foward or backward versions.
+	//myGrid is the grid the agent will move on. isFoward is true if you want to use repeated
+	//foward A* and false if you want to use repeated backward A*. smallGTieBreaker is true if
+	//you want the method to break ties between cells with the same f value in the open list by 
+	//choosing the cell with the lowest g value. If false it will break ties between cells with the 
+	//same f value in the open list by choosing the cell with the largest g value. the remaining
+	//4 int parameter indicate where you want the agent and targets x and y coordinates to be
+	public static void moveAgentToTarget(Grid myGrid, boolean isFoward, boolean smallGTieBreaker, 
+			int agentX, int agentY, int targetX, int targetY){
+		
+		try {
+			myGrid.agent = myGrid.grid[agentX][agentY];
+			myGrid.target = myGrid.grid[targetX][targetY];
+			myGrid.agent.isBlocked = myGrid.target.isBlocked = false;
+		} catch (IndexOutOfBoundsException e){
+			System.out.println("invalid agent or target coordinates");
+			return;
+		}
+		
+		if (isFoward){
+			repeatedFowardAStar(myGrid, smallGTieBreaker);
+		}
+		else {
+			repeatedBackwardAStar(myGrid, smallGTieBreaker);
+		}
+	}
 	
 	public static void main(String[] args){
-		
-		
-		
-		
-		
 		Grid myGrid;
-		//myGrid = new Grid(101, 101);
-		//myGrid.printGrid();
-		
-		//myGrid.generateMaze();
-		/*
-		try {
-			myGrid.writeToFile("grids" + File.separator + "test8");
-		} catch (IOException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		}
-		*/
 		
 		//go through all 50 grids
 		/*
@@ -571,20 +575,22 @@ public class Grid implements Serializable {
 				e.printStackTrace();
 				return;
 			}
-			myGrid.agent = myGrid.grid[0][99];
-			myGrid.target = myGrid.grid[myGrid.grid.length-2][0];
+			//myGrid.agent = myGrid.grid[0][99];
+			myGrid.agent = myGrid.grid[0][3];
+			//myGrid.target = myGrid.grid[myGrid.grid.length-2][0];
+			myGrid.target = myGrid.grid[99][100];
 			myGrid.agent.isBlocked = false;
 			myGrid.target.isBlocked = false;
 			//System.out.println("Grid" + i + ":");
-			repeatedFowardAStar(myGrid, true);
+			repeatedBackwardAStar(myGrid, false);
 		}
 		*/
-
 		
 		
 		//check particular grid
-		/*
-		int gridNum = 26;
+		
+		int gridNum = 3;
+		
 		try {
 			myGrid = loadFromFile("grids" + File.separator + "grid" + gridNum);
 		} catch (ClassNotFoundException | IOException e) {
@@ -592,30 +598,14 @@ public class Grid implements Serializable {
 			e.printStackTrace();
 			return;
 		}
+		boolean isFoward = false;
+		boolean smallGTieBreaker = false;
+		int agentX = 0;
+		int agentY = 3;
+		int targetX = myGrid.grid.length-2;
+		int targetY = myGrid.grid[0].length-1;
 		
-		
-		myGrid.agent = myGrid.grid[0][3];
-		myGrid.target = myGrid.grid[myGrid.grid.length-2][myGrid.grid[0].length-1];
-		myGrid.agent.isBlocked = false;
-		myGrid.target.isBlocked = false;
-		System.out.println("Grid" + gridNum + ":");
-		repeatedFowardAStar(myGrid, false);
-		*/
-		try {
-			myGrid = loadFromFile("grids" + File.separator + "test1");
-		} catch (ClassNotFoundException | IOException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-			return;
-		}
-		myGrid.agent = myGrid.grid[0][0];
-		myGrid.target = myGrid.grid[myGrid.grid.length-1][myGrid.grid[0].length-1];
-		myGrid.agent.isBlocked = false;
-		myGrid.target.isBlocked = false;
-		myGrid.printGrid();
-		//repeatedFowardAStar(myGrid, false);
-		//repeatedFowardAStar(myGrid, false);
-		repeatedBackwardAStar(myGrid, false);
+		moveAgentToTarget(myGrid, isFoward, smallGTieBreaker, agentX, agentY, targetX, targetY);
 		
 		
 		/********************************************************************
