@@ -16,6 +16,7 @@ import java.util.Stack;
 
 public class Grid implements Serializable {
 	private static final long serialVersionUID = 2L;
+	public static ArrayList<Cell> expandedCells;
 	Cell[][] grid;
 	Cell agent;
 	Cell target;
@@ -346,6 +347,12 @@ public class Grid implements Serializable {
 		
 		while (pq.peek() != null && (pq.peek().g < goal.g || goal.g < 0) ){
 			Cell current = pq.poll();
+			if (expandedCells == null){
+				expandedCells = new ArrayList<Cell>();
+			}
+			if (!expandedCells.contains(current)){
+				expandedCells.add(current);
+			}
 			//visited.add(current);
 			ArrayList<Cell> cellsWithSameF = new ArrayList<Cell>();
 			cellsWithSameF.add(current);
@@ -455,14 +462,16 @@ public class Grid implements Serializable {
 					break;
 				myGrid.agent = c;
 				moveCounter++;
-				System.out.println("\nMove " + moveCounter++);
+				//System.out.println("\nMove " + moveCounter++);
 				moveHistory[c.x][c.y] = true;
 				//myGrid.printGrid();
 			}
 			
 		}
-		System.out.println(moveCounter);
-		myGrid.printGrid(moveHistory);
+		//System.out.println("moves: " + moveCounter);
+		System.out.println(/*"expanded cells: " + */expandedCells.size());
+		expandedCells = null;
+		//myGrid.printGrid(moveHistory);
 	}
 	
 	//goal state is agent instead of target. There have been some adjustments but this is 
@@ -531,8 +540,10 @@ public class Grid implements Serializable {
 			}
 			
 		}
-		System.out.println(moveCounter);
-		myGrid.printGrid(moveHistory);
+		//System.out.println("moves: " + moveCounter);
+		System.out.println(/*"expanded cells: "+*/ expandedCells.size());
+		expandedCells = null;
+		//myGrid.printGrid(moveHistory);
 	}
 	
 	//all in one method to move agent to target using either foward or backward versions.
@@ -598,14 +609,25 @@ public class Grid implements Serializable {
 			e.printStackTrace();
 			return;
 		}
-		boolean isFoward = false;
+		boolean isFoward = true;
 		boolean smallGTieBreaker = false;
 		int agentX = 0;
 		int agentY = 3;
 		int targetX = myGrid.grid.length-2;
 		int targetY = myGrid.grid[0].length-1;
 		
-		moveAgentToTarget(myGrid, isFoward, smallGTieBreaker, agentX, agentY, targetX, targetY);
+		for (int i = 1; i <= 50; i++){
+			try {
+				myGrid = loadFromFile("grids" + File.separator + "grid" + i);
+			} catch (ClassNotFoundException | IOException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+				return;
+			}
+			moveAgentToTarget(myGrid, isFoward, smallGTieBreaker, agentX, agentY, targetX, targetY);
+		}
+		
+		
 		
 		
 		/********************************************************************
