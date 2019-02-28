@@ -18,6 +18,7 @@ import java.util.Stack;
 public class Grid implements Serializable {
 	private static final long serialVersionUID = 2L;
 	public static ArrayList<Cell> expandedCells;
+	public static boolean isBackward;
 	Cell[][] grid;
 	Cell agent;
 	Cell target;
@@ -273,7 +274,10 @@ public class Grid implements Serializable {
 			return;
 		for (int j = 0; j < grid[0].length; j++){
 			for (int i = 0; i < grid.length; i++){
-				grid[i][j].h = calcManhattanDist(grid[i][j], target);
+				if (isBackward)
+					grid[i][j].h = calcManhattanDist(grid[i][j], agent);
+				else
+					grid[i][j].h = calcManhattanDist(grid[i][j], target);
 				grid[i][j].g = -1;
 				grid[i][j].f = -1;
 			}
@@ -356,6 +360,7 @@ public class Grid implements Serializable {
 			}
 			if (!expandedCells.contains(current)){
 				expandedCells.add(current);
+				//System.out.println("expanding [" + current + "] for the first time ");
 			}
 			//visited.add(current);
 			ArrayList<Cell> cellsWithSameF = new ArrayList<Cell>();
@@ -488,6 +493,7 @@ public class Grid implements Serializable {
 	//usually has to recompute the path a lot because there is a ton of crap in the
 	//way. 
 	public static void repeatedForwardAStar(Grid myGrid, Boolean smallGTieBreaker){
+		isBackward = false;
 		int moveCounter = 1;
 		myGrid.initialize_h_g_f_values();
 		Boolean[][] knownCells = new Boolean[myGrid.grid.length][myGrid.grid[0].length]; 
@@ -559,6 +565,7 @@ public class Grid implements Serializable {
 	//goal state is agent instead of target. There have been some adjustments but this is 
 	//very similar to forward version
 	public static void repeatedBackwardAStar(Grid myGrid, Boolean smallGTieBreaker){
+		isBackward = true;
 		int moveCounter = 1;
 		myGrid.initialize_h_g_f_values();
 		Boolean[][] knownCells = new Boolean[myGrid.grid.length][myGrid.grid[0].length]; 
@@ -604,6 +611,7 @@ public class Grid implements Serializable {
 				//System.out.println("NO PATH TO TARGET.");
 				System.out.println("-1");
 				//myGrid.printGrid();
+				isBackward = false;
 				return;
 			}
 			
@@ -625,6 +633,7 @@ public class Grid implements Serializable {
 		//System.out.println("moves: " + moveCounter);
 		System.out.println(/*"expanded cells: "+*/ expandedCells.size());
 		expandedCells = null;
+		isBackward = false;
 		//myGrid.printGrid(moveHistory);
 	}
 	
@@ -749,7 +758,7 @@ public class Grid implements Serializable {
 
 		
 		//0 for ForwardA*, 1 for BackwardsA*, 2 for AdaptiveA*//
-		int aStarType = 2;
+		int aStarType = 1;
 
 		boolean smallGTieBreaker = false;
 		int agentX = 0;
@@ -759,6 +768,7 @@ public class Grid implements Serializable {
 		
 
 		for (int i = 1; i <= 50; i++){
+			
 			try {
 				myGrid = loadFromFile("grids" + File.separator + "grid" + i);
 			} catch (ClassNotFoundException | IOException e) {
@@ -767,6 +777,7 @@ public class Grid implements Serializable {
 				return;
 			}
 			moveAgentToTarget(myGrid, aStarType, smallGTieBreaker, agentX, agentY, targetX, targetY);
+			
 		}
 		
 
