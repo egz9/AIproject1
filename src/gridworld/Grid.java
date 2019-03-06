@@ -420,15 +420,19 @@ public class Grid implements Serializable {
 		//G-value of start state (g(goal)) //
 		int gOriginal= pq.peek().g;
 		
-		//int gS= -1;
-		
 		Cell goal = target;
 		
 		while (pq.peek() != null && (pq.peek().g < goal.g || goal.g < 0) ){
 			int moveCounter=0;
-			//gS++;
 			//Returns head of queue//
 			Cell current = pq.poll();
+			
+			if(expandedCells == null) {
+				expandedCells= new ArrayList<Cell>();
+			}
+			if(!expandedCells.contains(current)) {
+				expandedCells.add(current);
+			}
 
 			ArrayList<Cell> cellsWithSameF = new ArrayList<Cell>();
 			cellsWithSameF.add(current);
@@ -708,7 +712,8 @@ public class Grid implements Serializable {
 			}
 			
 		}
-		System.out.println(moveCounter);
+		System.out.println("Expanded Cells: "+ expandedCells.size()/4);
+		expandedCells= null;
 		myGrid.printGrid(moveHistory);
 	}
 	
@@ -758,7 +763,7 @@ public class Grid implements Serializable {
 
 		
 		//0 for ForwardA*, 1 for BackwardsA*, 2 for AdaptiveA*//
-		int aStarType = 1;
+		int aStarType = 2;
 
 		boolean smallGTieBreaker = false;
 		int agentX = 0;
@@ -767,10 +772,10 @@ public class Grid implements Serializable {
 		int targetY = myGrid.grid[0].length-1;
 		
 
-		for (int i = 1; i <= 50; i++){
+		//for (int i = 1; i <= 50; i++){
 			
 			try {
-				myGrid = loadFromFile("grids" + File.separator + "grid" + i);
+				myGrid = loadFromFile("grids" + File.separator + "grid" + gridNum);
 			} catch (ClassNotFoundException | IOException e) {
 				// TODO Auto-generated catch block
 				e.printStackTrace();
@@ -778,30 +783,7 @@ public class Grid implements Serializable {
 			}
 			moveAgentToTarget(myGrid, aStarType, smallGTieBreaker, agentX, agentY, targetX, targetY);
 			
-		}
-		
-
-		
-		//Go through all 50 grids
-				/*
-				for (int i = 1; i <= 50; i++){
-					try {
-						myGrid = loadFromFile("grids" + File.separator + "grid" + i);
-					} catch (ClassNotFoundException | IOException e) {
-						// TODO Auto-generated catch block
-						e.printStackTrace();
-						return;
-					}
-					//myGrid.agent = myGrid.grid[0][99];
-					myGrid.agent = myGrid.grid[0][3];
-					//myGrid.target = myGrid.grid[myGrid.grid.length-2][0];
-					myGrid.target = myGrid.grid[99][100];
-					myGrid.agent.isBlocked = false;
-					myGrid.target.isBlocked = false;
-					//System.out.println("Grid" + i + ":");
-					repeatedBackwardAStar(myGrid, false);
-				}
-				*/
+		//}
 		
 		/********************************************************************
 		//Write mazes to auto-generated files
